@@ -42,7 +42,7 @@ After which you must register your agent with Monte Carlo. See
 documentation.
 
 Note that this module is configured to delete all resources when the resource group is deleted (e.g. via terraform
-destroy). Please take appropriate measures and review your resources.
+destroy). Please take appropriate measures and review your resources before doing so.
 See [here](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/features-block#prevent_deletion_if_contains_resources)
 for additional details.
 
