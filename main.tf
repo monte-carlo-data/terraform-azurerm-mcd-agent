@@ -24,15 +24,17 @@ locals {
   mcd_agent_identity_types = "SystemAssigned, UserAssigned"
   mcd_agent_function_app_settings = {
     # Function configuration
-    always_on                           = true
-    AzureWebJobsDisableHomepage         = true
-    FUNCTION_APP_EDIT_MODE              = "readOnly"
-    FUNCTIONS_EXTENSION_VERSION         = "~4"
-    DOCKER_REGISTRY_SERVER_URL          = "${local.docker_scheme}://${local.docker_registry_url}"
-    DOCKER_CUSTOM_IMAGE_NAME            = "${local.docker_registry_url}/${var.image}"
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
-    AZURE_CLIENT_ID                     = azurerm_user_assigned_identity.mcd_agent_service_identity.client_id
-    # TODO - Add scaling configuration when finalized. And to lifecycle ignore list for functions with remote upgrades
+    always_on                                                                      = true
+    AzureWebJobsDisableHomepage                                                    = true
+    FUNCTION_APP_EDIT_MODE                                                         = "readOnly"
+    FUNCTIONS_EXTENSION_VERSION                                                    = "~4"
+    DOCKER_REGISTRY_SERVER_URL                                                     = "${local.docker_scheme}://${local.docker_registry_url}"
+    DOCKER_CUSTOM_IMAGE_NAME                                                       = "${local.docker_registry_url}/${var.image}"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE                                            = false
+    AZURE_CLIENT_ID                                                                = azurerm_user_assigned_identity.mcd_agent_service_identity.client_id
+    FUNCTIONS_WORKER_PROCESS_COUNT                                                 = 5
+    PYTHON_THREADPOOL_THREAD_COUNT                                                 = 5
+    AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions = 20
 
     # MC properties and configuration
     MCD_AGENT_IMAGE_TAG       = var.image
@@ -214,7 +216,10 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
       app_settings["DOCKER_REGISTRY_SERVER_URL"],
       app_settings["FUNCTIONS_EXTENSION_VERSION"],
       app_settings["DOCKER_CUSTOM_IMAGE_NAME"],
-      app_settings["MCD_AGENT_IMAGE_TAG"]
+      app_settings["MCD_AGENT_IMAGE_TAG"],
+      app_settings["FUNCTIONS_WORKER_PROCESS_COUNT"],
+      app_settings["PYTHON_THREADPOOL_THREAD_COUNT"],
+      app_settings["AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions"],
     ]
   }
 }
