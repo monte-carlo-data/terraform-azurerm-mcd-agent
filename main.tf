@@ -109,7 +109,7 @@ resource "azurerm_service_plan" "mcd_agent_service_plan" {
 }
 
 resource "azurerm_log_analytics_workspace" "mcd_agent_service_analytics_workspace" {
-  name                = "analytics-workspace-${local.mcd_agent_function_name}" 
+  name                = "analytics-workspace-${local.mcd_agent_function_name}"
   resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   location            = azurerm_resource_group.mcd_agent_rg.location
   sku                 = "PerGB2018"
@@ -121,7 +121,7 @@ resource "azurerm_application_insights" "mcd_agent_service_insights" {
   resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   location            = azurerm_resource_group.mcd_agent_rg.location
   workspace_id        = azurerm_log_analytics_workspace.mcd_agent_service_analytics_workspace.id
-  application_type  = "other"
+  application_type    = "other"
 }
 
 resource "azurerm_user_assigned_identity" "mcd_agent_service_identity" {
