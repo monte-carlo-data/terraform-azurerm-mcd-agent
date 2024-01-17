@@ -32,6 +32,7 @@ locals {
     DOCKER_CUSTOM_IMAGE_NAME                                                       = "${local.docker_registry_url}/${var.image}"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE                                            = false
     AZURE_CLIENT_ID                                                                = azurerm_user_assigned_identity.mcd_agent_service_identity.client_id
+    APPINSIGHTS_RESOURCE_ID                                                        = azurerm_application_insights.mcd_agent_service_insights.id
     FUNCTIONS_WORKER_PROCESS_COUNT                                                 = 5
     PYTHON_THREADPOOL_THREAD_COUNT                                                 = 5
     AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions = 20
@@ -107,13 +108,20 @@ resource "azurerm_service_plan" "mcd_agent_service_plan" {
   sku_name = "EP1"
 }
 
+resource "azurerm_log_analytics_workspace" "mcd_agent_service_analytics_workspace" {
+  name                = "analytics-workspace-${local.mcd_agent_function_name}" 
+  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
+  location            = azurerm_resource_group.mcd_agent_rg.location
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
 resource "azurerm_application_insights" "mcd_agent_service_insights" {
   name                = "application-insights-${local.mcd_agent_function_name}"
   resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   location            = azurerm_resource_group.mcd_agent_rg.location
-
+  workspace_id        = azurerm_log_analytics_workspace.mcd_agent_service_analytics_workspace.id
   application_type  = "other"
-  retention_in_days = 30
 }
 
 resource "azurerm_user_assigned_identity" "mcd_agent_service_identity" {
