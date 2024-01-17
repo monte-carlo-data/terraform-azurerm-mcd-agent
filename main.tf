@@ -21,7 +21,7 @@ locals {
 
   # Function properties
   mcd_agent_function_name  = "${local.mcd_agent_naming_prefix}-service-${random_id.mcd_agent_id.hex}"
-  mcd_agent_identity_types = "SystemAssigned, UserAssigned"
+  mcd_agent_identity_types = "UserAssigned"
   mcd_agent_function_app_settings = {
     # Function configuration
     always_on                                                                      = true
