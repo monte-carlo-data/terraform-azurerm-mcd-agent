@@ -97,6 +97,19 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
       }
     }
   }
+  rule {
+    name    = "temp-expiration"
+    enabled = true
+    filters {
+      blob_types   = ["blockBlob", "appendBlob"]
+      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.mcd_agent_store_data_prefix}/tmp"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 2
+      }
+    }
+  }
 }
 
 resource "azurerm_service_plan" "mcd_agent_service_plan" {
