@@ -82,7 +82,7 @@ resource "azurerm_storage_container" "mcd_agent_storage_container" {
   container_access_type = "private"
 }
 
-resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
+resource "azurerm_storage_management_policy" "mcd_agent_storage_obj_lifecycle" {
   storage_account_id = azurerm_storage_account.mcd_agent_storage[1].id
   rule {
     name    = "obj-expiration"
@@ -94,6 +94,23 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
     actions {
       base_blob {
         delete_after_days_since_creation_greater_than = 90
+      }
+    }
+  }
+}
+
+resource "azurerm_storage_management_policy" "mcd_agent_storage_temp_lifecycle" {
+  storage_account_id = azurerm_storage_account.mcd_agent_storage[1].id
+  rule {
+    name    = "temp-expiration"
+    enabled = true
+    filters {
+      blob_types   = ["blockBlob", "appendBlob"]
+      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.mcd_agent_store_data_prefix}/tmp"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_creation_greater_than = 2
       }
     }
   }
