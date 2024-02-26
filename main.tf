@@ -243,6 +243,7 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
       app_settings["FUNCTIONS_WORKER_PROCESS_COUNT"],
       app_settings["PYTHON_THREADPOOL_THREAD_COUNT"],
       app_settings["AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions"],
+      app_settings["AzureFunctionsJobHost__functionTimeout"],
     ]
   }
 }
