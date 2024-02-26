@@ -36,6 +36,7 @@ locals {
     FUNCTIONS_WORKER_PROCESS_COUNT                                                 = 5
     PYTHON_THREADPOOL_THREAD_COUNT                                                 = 5
     AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions = 20
+    AzureFunctionsJobHost__functionTimeout                                         = "00:15:00"
 
     # MC properties and configuration
     MCD_AGENT_IMAGE_TAG       = var.image
