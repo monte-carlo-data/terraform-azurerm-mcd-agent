@@ -1,6 +1,6 @@
 locals {
   # Wrapper metadata
-  mcd_wrapper_version       = "0.1.1"
+  mcd_wrapper_version       = "0.1.2"
   mcd_agent_platform        = "AZURE"
   mcd_agent_service_name    = "REMOTE_AGENT"
   mcd_agent_deployment_type = "TERRAFORM"
@@ -174,6 +174,8 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
   resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   location            = azurerm_resource_group.mcd_agent_rg.location
 
+  builtin_logging_enabled = false
+
   storage_account_name       = azurerm_storage_account.mcd_agent_storage[0].name
   storage_account_access_key = azurerm_storage_account.mcd_agent_storage[0].primary_access_key
   service_plan_id            = azurerm_service_plan.mcd_agent_service_plan.id
@@ -211,6 +213,8 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
   name                = local.mcd_agent_function_name
   resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   location            = azurerm_resource_group.mcd_agent_rg.location
+
+  builtin_logging_enabled = false
 
   storage_account_name       = azurerm_storage_account.mcd_agent_storage[0].name
   storage_account_access_key = azurerm_storage_account.mcd_agent_storage[0].primary_access_key
