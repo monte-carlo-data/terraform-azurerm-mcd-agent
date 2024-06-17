@@ -1,6 +1,6 @@
 locals {
   # Wrapper metadata
-  mcd_wrapper_version       = "0.1.2"
+  mcd_wrapper_version       = "0.1.3"
   mcd_agent_platform        = "AZURE"
   mcd_agent_service_name    = "REMOTE_AGENT"
   mcd_agent_deployment_type = "TERRAFORM"
@@ -180,6 +180,9 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
   storage_account_access_key = azurerm_storage_account.mcd_agent_storage[0].primary_access_key
   service_plan_id            = azurerm_service_plan.mcd_agent_service_plan.id
 
+  public_network_access_enabled = !var.disable_public_inbound
+  virtual_network_subnet_id     = var.subnet_id
+
   site_config {
     application_insights_key               = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
     application_insights_connection_string = azurerm_application_insights.mcd_agent_service_insights.connection_string
@@ -219,6 +222,9 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
   storage_account_name       = azurerm_storage_account.mcd_agent_storage[0].name
   storage_account_access_key = azurerm_storage_account.mcd_agent_storage[0].primary_access_key
   service_plan_id            = azurerm_service_plan.mcd_agent_service_plan.id
+
+  public_network_access_enabled = !var.disable_public_inbound
+  virtual_network_subnet_id     = var.subnet_id
 
   site_config {
     application_insights_key               = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
