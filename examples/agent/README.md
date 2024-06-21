@@ -1,8 +1,6 @@
 # Agent Sample
 
-This example deploys a pre-release Agent.
-
-Note that the pre-release agent is in active development and not intended for production usage.
+This example deploys an Agent.
 
 ## Prerequisites
 

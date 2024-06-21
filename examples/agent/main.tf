@@ -1,6 +1,5 @@
 module "apollo" {
   source = "../../"
-  image  = "montecarlodata/pre-release-agent:latest-azure"
 }
 
 output "resource_group" {
