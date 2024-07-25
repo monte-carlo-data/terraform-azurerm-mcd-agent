@@ -1,6 +1,6 @@
-# Monte Carlo Azure Agent Module (Beta)
+# Monte Carlo Azure Agent Module
 
-This module deploys Monte Carlo's [containerized agent](https://hub.docker.com/r/montecarlodata/agent) (Beta) on Azure
+This module deploys Monte Carlo's [containerized agent](https://hub.docker.com/r/montecarlodata/agent) on Azure
 functions, along with storage, roles etc.
 
 See [here](https://docs.getmontecarlo.com/docs/platform-architecture) for architecture details and alternative
