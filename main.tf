@@ -72,7 +72,7 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
 
   account_tier                      = "Standard"
   account_replication_type          = "GRS"
-  enable_https_traffic_only         = true
+  https_traffic_only_enabled        = true
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
 } # Key: Index 0 - Function Storage (e.g. durable function data). Index 1 - App storage (e.g. MC sampling)
