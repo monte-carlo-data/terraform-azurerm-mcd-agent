@@ -1,6 +1,6 @@
 locals {
   # Wrapper metadata
-  mcd_wrapper_version       = "1.0.0"
+  mcd_wrapper_version       = "1.0.1"
   mcd_agent_platform        = "AZURE"
   mcd_agent_service_name    = "REMOTE_AGENT"
   mcd_agent_deployment_type = "TERRAFORM"
@@ -72,7 +72,7 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
 
   account_tier                      = "Standard"
   account_replication_type          = "GRS"
-  enable_https_traffic_only         = true
+  https_traffic_only_enabled        = true
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
 } # Key: Index 0 - Function Storage (e.g. durable function data). Index 1 - App storage (e.g. MC sampling)
