@@ -60,15 +60,26 @@ resource "random_id" "mcd_agent_id" {
 ## ---------------------------------------------------------------------------------------------------------------------
 
 resource "azurerm_resource_group" "mcd_agent_rg" {
+  count    = var.existing_resource_group_name == null ? 1 : 0
   name     = "${local.mcd_agent_naming_prefix}-group-${random_id.mcd_agent_id.hex}"
   location = var.location
+}
+
+data "azurerm_resource_group" "mcd_agent_rg" {
+  count    = var.existing_resource_group_name != null ? 1 : 0
+  name     = var.existing_resource_group_name
+}
+
+locals {
+  mcd_agent_resource_group_name     = var.existing_resource_group_name == null ? azurerm_resource_group.mcd_agent_rg[0].name : var.existing_resource_group_name
+  mcd_agent_resource_group_location = var.existing_resource_group_name == null ? azurerm_resource_group.mcd_agent_rg[0].location : data.azurerm_resource_group.mcd_agent_rg[0].location
 }
 
 resource "azurerm_storage_account" "mcd_agent_storage" {
   count               = 2
   name                = "mcdagent${count.index}fs${random_id.mcd_agent_id.hex}"
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
 
   account_tier                      = "Standard"
   account_replication_type          = "GRS"
@@ -115,8 +126,8 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
 
 resource "azurerm_service_plan" "mcd_agent_service_plan" {
   name                = "${local.mcd_agent_naming_prefix}-service-plan"
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
 
   os_type  = "Linux"
   sku_name = "EP1"
@@ -124,24 +135,24 @@ resource "azurerm_service_plan" "mcd_agent_service_plan" {
 
 resource "azurerm_log_analytics_workspace" "mcd_agent_service_analytics_workspace" {
   name                = "analytics-workspace-${local.mcd_agent_function_name}"
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
   sku                 = "PerGB2018"
   retention_in_days   = 30
 }
 
 resource "azurerm_application_insights" "mcd_agent_service_insights" {
   name                = "application-insights-${local.mcd_agent_function_name}"
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
   workspace_id        = azurerm_log_analytics_workspace.mcd_agent_service_analytics_workspace.id
   application_type    = "other"
 }
 
 resource "azurerm_user_assigned_identity" "mcd_agent_service_identity" {
   name                = "${local.mcd_agent_function_name}-identity"
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
 }
 
 resource "azurerm_role_assignment" "mcd_agent_storage_cont_ra" {
@@ -171,8 +182,8 @@ resource "azurerm_role_assignment" "mcd_agent_logs_ra" {
 resource "azurerm_linux_function_app" "mcd_agent_service" {
   count               = var.remote_upgradable ? 0 : 1
   name                = local.mcd_agent_function_name
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
 
   builtin_logging_enabled = false
 
@@ -214,8 +225,8 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
 resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_support" {
   count               = var.remote_upgradable ? 1 : 0
   name                = local.mcd_agent_function_name
-  resource_group_name = azurerm_resource_group.mcd_agent_rg.name
-  location            = azurerm_resource_group.mcd_agent_rg.location
+  resource_group_name = local.mcd_agent_resource_group_name
+  location            = local.mcd_agent_resource_group_location
 
   builtin_logging_enabled = false
 

@@ -16,7 +16,7 @@ variable "image" {
 }
 
 variable "location" {
-  description = "The Azure location (region) to deploy the agent into."
+  description = "The Azure location (region) to deploy the agent into. If an existing resource group is specified using existing_resource_group_name, this value is ignored."
   type        = string
   default     = "EAST US"
 }
@@ -43,6 +43,12 @@ variable "subnet_id" {
 
     The ID can be retrieved using the command `az network vnet subnet list`.
   EOF
+  type        = string
+  default     = null
+}
+
+variable "existing_resource_group_name" {
+  description = "The name of an existing resource group to use for the agent. If not specified a new resource group will be created."
   type        = string
   default     = null
 }

@@ -9,6 +9,6 @@ output "mcd_agent_function_name" {
 }
 
 output "mcd_agent_resource_group_name" {
-  value       = azurerm_resource_group.mcd_agent_rg.name
+  value       = local.mcd_agent_resource_group_name
   description = "Agent service resource group."
 }
