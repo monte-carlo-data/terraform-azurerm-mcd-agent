@@ -15,8 +15,8 @@ resource "azurerm_storage_account" "durable_function_storage" {
   # in the future.
   public_network_access_enabled = true
   network_rules {
-    default_action             = "Deny"
-    ip_rules                   = [local.my_ip]
+    default_action = "Deny"
+    ip_rules       = [local.my_ip]
   }
 }
 
