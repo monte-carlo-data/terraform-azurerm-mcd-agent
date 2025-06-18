@@ -2,7 +2,6 @@ locals {
   # Wrapper metadata
   mcd_wrapper_version       = "1.0.3"
   mcd_agent_platform        = "AZURE"
-  mcd_agent_service_name    = "REMOTE_AGENT"
   mcd_agent_deployment_type = "TERRAFORM"
 
   # Docker properties
@@ -47,9 +46,9 @@ locals {
     MCD_STORAGE_ACCOUNT_NAME = local.agent_data_storage_account_name
     MCD_STORAGE_BUCKET_NAME  = local.agent_data_storage_container_name
   }
-  mcd_agent_function_app_settings = var.storage_accounts_private_access ? merge({
+  mcd_agent_function_app_settings = var.existing_storage_accounts != null && var.existing_storage_accounts.private_access ? merge({
     "WEBSITE_CONTENTOVERVNET" = "1"
-    "WEBSITE_CONTENTSHARE"    = var.durable_function_storage_account_share_name == null ? local.durable_function_storage_account_name : var.durable_function_storage_account_share_name
+    "WEBSITE_CONTENTSHARE"    = var.existing_storage_accounts.agent_durable_function_storage_account_share_name
   }, local.mcd_agent_function_app_settings_base) : local.mcd_agent_function_app_settings_base
 }
 
@@ -89,8 +88,8 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
 } # Key: Index 0 - Function Storage (e.g. durable function data). Index 1 - App storage (e.g. MC sampling)
 
 locals {
-  durable_function_storage_account_name = local.use_existing_storage_accounts ? var.existing_storage_accounts.durable_function_storage_account_name : azurerm_storage_account.mcd_agent_storage[0].name
-  durable_function_storage_access_key   = local.use_existing_storage_accounts ? var.durable_function_storage_account_access_key : azurerm_storage_account.mcd_agent_storage[0].primary_access_key
+  durable_function_storage_account_name = local.use_existing_storage_accounts ? var.existing_storage_accounts.agent_durable_function_storage_account_name : azurerm_storage_account.mcd_agent_storage[0].name
+  durable_function_storage_access_key   = local.use_existing_storage_accounts ? var.existing_storage_accounts.agent_durable_function_storage_account_access_key : azurerm_storage_account.mcd_agent_storage[0].primary_access_key
   agent_data_storage_account_name       = local.use_existing_storage_accounts ? var.existing_storage_accounts.agent_data_storage_account_name : azurerm_storage_account.mcd_agent_storage[1].name
   agent_data_storage_container_name     = local.use_existing_storage_accounts ? var.existing_storage_accounts.agent_data_storage_container_name : local.mcd_agent_store_container_name
 }
@@ -229,10 +228,6 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
       app_settings["FUNCTIONS_EXTENSION_VERSION"],
       tags["hidden-link: /app-insights-resource-id"],
     ]
-    precondition {
-      condition     = var.existing_storage_accounts == null || var.durable_function_storage_account_access_key != null
-      error_message = "durable_function_storage_account_access_key is required if existing_storage_accounts is specified."
-    }
   } # Necessary due to a bug in the azure terraform provider where these values are re-applied sans scheme in every run
 }
 

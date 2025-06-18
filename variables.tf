@@ -53,39 +53,25 @@ variable "existing_resource_group_name" {
   description = <<EOF
     The name of an existing resource group to use for the agent. If not specified a new resource group will be created.
 
-    NOTE: It's recommended to use the resource group specified here only for MC agent related resources.
+    NOTE: We strongly recommend that you do not share resource groups with other jobs, as Monte Carlo might overwrite existing data.
   EOF
 }
 
 variable "existing_storage_accounts" {
   type = object({
-    durable_function_storage_account_name = string # Storage account used by the Azure Durable Functions
-    agent_data_storage_account_name       = string # Storage account used by the MC agent
-    agent_data_storage_container_name     = string # Container used by the MC agent
+    agent_durable_function_storage_account_name       = string # Storage account used by the Azure Durable Functions
+    agent_durable_function_storage_account_access_key = string # The access key for the durable function storage account
+    agent_durable_function_storage_account_share_name = string # The name of the storage account share for Azure Durable Functions
+    agent_data_storage_account_name                   = string # Storage account used by the MC agent
+    agent_data_storage_container_name                 = string # Container used by the MC agent
+    private_access                                    = bool # Whether the access to the storage accounts should use private networking. If true WEBSITE_CONTENTOVERVNET is set to 1 and WEBSITE_CONTENTSHARE to the name of the share.
   })
+  sensitive   = true
   default     = null
   description = <<EOF
     Optionally use existing storage accounts for the agent. If not specified new storage accounts will be created.
 
-    NOTE: It's recommended to use the storage accounts specified here only for the MC agent.
+    NOTE: We strongly recommend that you do not share storage accounts with other jobs, as Monte Carlo might overwrite existing data.
   EOF
 }
 
-variable "durable_function_storage_account_access_key" {
-  type        = string
-  default     = null
-  sensitive   = true
-  description = "The access key for the durable function storage account. Required if existing_storage_accounts is specified."
-}
-
-variable "storage_accounts_private_access" {
-  description = "Whether the storage accounts should be private. If true, the agent will use private endpoints to access them."
-  type        = bool
-  default     = false
-}
-
-variable "durable_function_storage_account_share_name" {
-  description = "The name of the storage account share for Azure Durable Functions, if not specified it is assumed to be the name of the storage account."
-  type        = string
-  default     = null
-}

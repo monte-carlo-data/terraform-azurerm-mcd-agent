@@ -34,13 +34,15 @@ module "apollo" {
 
   existing_resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   existing_storage_accounts = {
-    durable_function_storage_account_name = azurerm_storage_account.durable_function_storage.name
-    agent_data_storage_account_name       = azurerm_storage_account.mcd_agent_storage.name
-    agent_data_storage_container_name     = azurerm_storage_container.mcd_agent_storage_container.name
+    agent_durable_function_storage_account_name       = azurerm_storage_account.durable_function_storage.name
+    agent_durable_function_storage_account_access_key = azurerm_storage_account.durable_function_storage.primary_access_key
+    agent_durable_function_storage_account_share_name = azurerm_storage_share.durable_function_storage.name
+
+    agent_data_storage_account_name   = azurerm_storage_account.mcd_agent_storage.name
+    agent_data_storage_container_name = azurerm_storage_container.mcd_agent_storage_container.name
+
+    private_access = true
   }
-  durable_function_storage_account_access_key = azurerm_storage_account.durable_function_storage.primary_access_key
-  durable_function_storage_account_share_name = azurerm_storage_share.durable_function_storage.name
-  storage_accounts_private_access             = true
   subnet_id                                   = azurerm_subnet.agent.id
 }
 
