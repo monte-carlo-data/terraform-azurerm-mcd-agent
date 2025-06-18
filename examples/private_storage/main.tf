@@ -37,7 +37,7 @@ module "apollo" {
   existing_storage_accounts = {
     durable_function_storage_account_name = azurerm_storage_account.durable_function_storage.name
     agent_data_storage_account_name       = azurerm_storage_account.mcd_agent_storage.name
-    agent_data_storage_container_name     = local.agent_data_storage_container_name
+    agent_data_storage_container_name     = azurerm_storage_container.mcd_agent_storage_container.name
   }
   durable_function_storage_account_access_key = azurerm_storage_account.durable_function_storage.primary_access_key
   durable_function_storage_account_share_name = azurerm_storage_share.durable_function_storage.name

@@ -111,7 +111,22 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
   https_traffic_only_enabled        = true
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
-  public_network_access_enabled     = false
+
+  # Using this approach to allow access from the IP address running Terraform,
+  # this is required for the creation of the share below and run TF plan/apply
+  # in the future.
+  public_network_access_enabled = true
+  network_rules {
+    default_action = "Deny"
+    ip_rules       = [local.my_ip]
+  }
+}
+
+# Container used by the MC agent
+resource "azurerm_storage_container" "mcd_agent_storage_container" {
+  name                  = local.agent_data_storage_container_name
+  storage_account_name  = azurerm_storage_account.mcd_agent_storage.name
+  container_access_type = "private"
 }
 
 # Private endpoint for the MC agent storage account
@@ -141,7 +156,7 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
     enabled = true
     filters {
       blob_types   = ["blockBlob", "appendBlob"]
-      prefix_match = ["${local.agent_data_storage_container_name}/${local.agent_data_store_data_prefix}"]
+      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}"]
     }
     actions {
       base_blob {
@@ -154,7 +169,7 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
     enabled = true
     filters {
       blob_types   = ["blockBlob", "appendBlob"]
-      prefix_match = ["${local.agent_data_storage_container_name}/${local.agent_data_store_data_prefix}/tmp"]
+      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}/tmp"]
     }
     actions {
       base_blob {

@@ -1,7 +1,15 @@
 # Agent Sample
 
-This example deploys an Agent using a VNet and storage accounts with public access disabled.
+This example deploys an Agent using a VNet and storage accounts using private access.
 Private endpoints are created for the storage accounts and the agent is configured to use them.
+
+Please note that Storage Accounts are configured with public access enabled only from the IP
+address running Terraform. 
+This is due to a limitation in the way the Azure provider for TF works, in order to create
+shares or containers it needs access to the storage account.
+You can remove this rule if you run TF from a subnet with access to the Storage Account or you 
+can update this module to remove the creation of the storage accounts (and the corresponding 
+share and container) and receive them as input variables.
 
 ## Prerequisites
 
