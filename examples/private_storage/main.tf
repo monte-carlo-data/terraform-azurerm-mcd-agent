@@ -2,6 +2,16 @@ resource "random_id" "unique_id" {
   byte_length = 4
 }
 
+# get the current IP address, used to allow access to the storage account from TF
+# to create the share
+data "http" "ip" {
+  url = "https://checkip.amazonaws.com"
+}
+
+locals {
+  my_ip = chomp(data.http.ip.response_body)
+}
+
 locals {
   suffix              = random_id.unique_id.hex
   resource_group_name = "mcd-agent-private-storage"

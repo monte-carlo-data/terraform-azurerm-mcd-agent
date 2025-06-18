@@ -9,9 +9,15 @@ resource "azurerm_storage_account" "durable_function_storage" {
   https_traffic_only_enabled        = true
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
-  # This is required to be true to create the share, it can be disabled after the TF plan is applied
-  # Please consider you won't be able to refresh the TF state (or plan/apply) with this flag disabled
+
+  # Using this approach to allow access from the IP address running Terraform,
+  # this is required for the creation of the share below and run TF plan/apply
+  # in the future.
   public_network_access_enabled = true
+  network_rules {
+    default_action             = "Deny"
+    ip_rules                   = [local.my_ip]
+  }
 }
 
 # Share to use for the Azure Function, for the WEBSITE_CONTENTSHARE setting
