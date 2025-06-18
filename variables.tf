@@ -64,7 +64,7 @@ variable "existing_storage_accounts" {
     agent_durable_function_storage_account_share_name = string # The name of the storage account share for Azure Durable Functions
     agent_data_storage_account_name                   = string # Storage account used by the MC agent
     agent_data_storage_container_name                 = string # Container used by the MC agent
-    private_access                                    = bool # Whether the access to the storage accounts should use private networking. If true WEBSITE_CONTENTOVERVNET is set to 1 and WEBSITE_CONTENTSHARE to the name of the share.
+    private_access                                    = bool   # Whether the access to the storage accounts should use private networking. If true WEBSITE_CONTENTOVERVNET is set to 1 and WEBSITE_CONTENTSHARE to the name of the share.
   })
   sensitive   = true
   default     = null

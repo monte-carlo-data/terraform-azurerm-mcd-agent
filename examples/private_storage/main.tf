@@ -43,7 +43,7 @@ module "apollo" {
 
     private_access = true
   }
-  subnet_id                                   = azurerm_subnet.agent.id
+  subnet_id = azurerm_subnet.agent.id
 }
 
 # Grant access to the storage account
