@@ -229,6 +229,10 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
       app_settings["FUNCTIONS_EXTENSION_VERSION"],
       tags["hidden-link: /app-insights-resource-id"],
     ]
+    precondition {
+      condition     = var.existing_storage_accounts == null || var.durable_function_storage_account_access_key != null
+      error_message = "durable_function_storage_account_access_key is required if existing_storage_accounts is specified."
+    }
   } # Necessary due to a bug in the azure terraform provider where these values are re-applied sans scheme in every run
 }
 

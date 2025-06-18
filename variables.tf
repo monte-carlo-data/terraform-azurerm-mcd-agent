@@ -76,10 +76,6 @@ variable "durable_function_storage_account_access_key" {
   default     = null
   sensitive   = true
   description = "The access key for the durable function storage account. Required if existing_storage_accounts is specified."
-  validation {
-    condition     = var.existing_storage_accounts == null || var.durable_function_storage_account_access_key != null
-    error_message = "durable_function_storage_account_access_key is required if existing_storage_accounts is specified."
-  }
 }
 
 variable "storage_accounts_private_access" {

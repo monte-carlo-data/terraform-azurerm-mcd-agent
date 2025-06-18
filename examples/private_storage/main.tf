@@ -31,7 +31,6 @@ resource "azurerm_resource_group" "mcd_agent_rg" {
 # Deploy the MC Agent
 module "apollo" {
   source = "../../"
-  image  = "montecarlodata/pre-release-agent:latest-azure"
 
   existing_resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   existing_storage_accounts = {
