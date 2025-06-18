@@ -21,6 +21,7 @@ resource "azurerm_resource_group" "mcd_agent_rg" {
 # Deploy the MC Agent
 module "apollo" {
   source = "../../"
+  image  = "montecarlodata/pre-release-agent:latest-azure"
 
   existing_resource_group_name = azurerm_resource_group.mcd_agent_rg.name
   existing_storage_accounts = {
@@ -35,8 +36,14 @@ module "apollo" {
 }
 
 # Grant access to the storage account
-resource "azurerm_role_assignment" "mcd_agent_storage_key_ra" {
+resource "azurerm_role_assignment" "mcd_agent_storage_cont_ra" {
   scope                = azurerm_storage_account.mcd_agent_storage.id
   principal_id         = module.apollo.mcd_agent_service_identity_principal_id
   role_definition_name = "Storage Blob Data Contributor"
+}
+
+resource "azurerm_role_assignment" "mcd_agent_storage_key_ra" {
+  scope                = azurerm_storage_account.mcd_agent_storage.id
+  principal_id         = module.apollo.mcd_agent_service_identity_principal_id
+  role_definition_name = "Storage Account Key Operator Service Role"
 }
