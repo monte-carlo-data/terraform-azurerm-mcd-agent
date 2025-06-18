@@ -16,7 +16,7 @@ variable "image" {
 }
 
 variable "location" {
-  description = "The Azure location (region) to deploy the agent into. If an existing resource group is specified using existing_resource_group_name, this value is ignored."
+  description = "The Azure location (region) to deploy resources into."
   type        = string
   default     = "EAST US"
 }
@@ -48,7 +48,48 @@ variable "subnet_id" {
 }
 
 variable "existing_resource_group_name" {
-  description = "The name of an existing resource group to use for the agent. If not specified a new resource group will be created."
+  type        = string
+  default     = null
+  description = <<EOF
+    The name of an existing resource group to use for the agent. If not specified a new resource group will be created.
+
+    NOTE: It's recommended to use the resource group specified here only for MC agent related resources.
+  EOF
+}
+
+variable "existing_storage_accounts" {
+  type = object({
+    durable_function_storage_account_name = string
+    agent_data_storage_account_name       = string
+    agent_data_storage_container_name     = string
+  })
+  default     = null
+  description = <<EOF
+    Optionally use existing storage accounts for the agent. If not specified new storage accounts will be created.
+
+    NOTE: It's recommended to use the storage accounts specified here only for the MC agent.
+  EOF
+}
+
+variable "durable_function_storage_account_access_key" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "The access key for the durable function storage account. Required if existing_storage_accounts is specified."
+  validation {
+    condition     = var.existing_storage_accounts == null || var.durable_function_storage_account_access_key != null
+    error_message = "durable_function_storage_account_access_key is required if existing_storage_accounts is specified."
+  }
+}
+
+variable "storage_accounts_private_access" {
+  description = "Whether the storage accounts should be private. If true, the agent will use private endpoints to access them."
+  type        = bool
+  default     = false
+}
+
+variable "durable_function_storage_account_share_name" {
+  description = "The name of the storage account share for the durable function, if not specified it is assumed to be the name of the storage account."
   type        = string
   default     = null
 }

@@ -12,3 +12,8 @@ output "mcd_agent_resource_group_name" {
   value       = local.mcd_agent_resource_group_name
   description = "Agent service resource group."
 }
+
+output "mcd_agent_service_identity_principal_id" {
+  value       = azurerm_user_assigned_identity.mcd_agent_service_identity.principal_id
+  description = "Agent service principal id."
+}
