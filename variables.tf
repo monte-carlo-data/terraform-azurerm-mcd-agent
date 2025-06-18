@@ -59,9 +59,9 @@ variable "existing_resource_group_name" {
 
 variable "existing_storage_accounts" {
   type = object({
-    durable_function_storage_account_name = string
-    agent_data_storage_account_name       = string
-    agent_data_storage_container_name     = string
+    durable_function_storage_account_name = string  # Storage account used by the Azure Durable Functions
+    agent_data_storage_account_name       = string  # Storage account used by the MC agent
+    agent_data_storage_container_name     = string  # Container used by the MC agent
   })
   default     = null
   description = <<EOF
@@ -89,7 +89,7 @@ variable "storage_accounts_private_access" {
 }
 
 variable "durable_function_storage_account_share_name" {
-  description = "The name of the storage account share for the durable function, if not specified it is assumed to be the name of the storage account."
+  description = "The name of the storage account share for Azure Durable Functions, if not specified it is assumed to be the name of the storage account."
   type        = string
   default     = null
 }
