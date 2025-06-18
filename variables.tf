@@ -16,7 +16,7 @@ variable "image" {
 }
 
 variable "location" {
-  description = "The Azure location (region) to deploy the agent into. If an existing resource group is specified using existing_resource_group_name, this value is ignored."
+  description = "The Azure location (region) to deploy resources into."
   type        = string
   default     = "EAST US"
 }
@@ -48,7 +48,30 @@ variable "subnet_id" {
 }
 
 variable "existing_resource_group_name" {
-  description = "The name of an existing resource group to use for the agent. If not specified a new resource group will be created."
   type        = string
   default     = null
+  description = <<EOF
+    The name of an existing resource group to use for the agent. If not specified a new resource group will be created.
+
+    NOTE: We strongly recommend that you do not share resource groups with other jobs, as Monte Carlo might overwrite existing data.
+  EOF
 }
+
+variable "existing_storage_accounts" {
+  type = object({
+    agent_durable_function_storage_account_name       = string # Storage account used by the Azure Durable Functions
+    agent_durable_function_storage_account_access_key = string # The access key for the durable function storage account
+    agent_durable_function_storage_account_share_name = string # The name of the storage account share for Azure Durable Functions
+    agent_data_storage_account_name                   = string # Storage account used by the MC agent
+    agent_data_storage_container_name                 = string # Container used by the MC agent
+    private_access                                    = bool   # Whether the access to the storage accounts should use private networking. If true WEBSITE_CONTENTOVERVNET is set to 1 and WEBSITE_CONTENTSHARE to the name of the share.
+  })
+  sensitive   = true
+  default     = null
+  description = <<EOF
+    Optionally use existing storage accounts for the agent. If not specified new storage accounts will be created.
+
+    NOTE: We strongly recommend that you do not share storage accounts with other jobs, as Monte Carlo might overwrite existing data.
+  EOF
+}
+
