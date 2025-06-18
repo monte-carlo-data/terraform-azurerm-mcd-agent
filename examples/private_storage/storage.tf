@@ -13,6 +13,8 @@ resource "azurerm_storage_account" "durable_function_storage" {
   # Using this approach to allow access from the IP address running Terraform,
   # this is required for the creation of the share below and run TF plan/apply
   # in the future.
+  # You can manually disable public access completely after deploying this module,
+  # just remember to restore this rule before executing TF again.
   public_network_access_enabled = true
   network_rules {
     default_action = "Deny"
@@ -113,8 +115,10 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
   infrastructure_encryption_enabled = true
 
   # Using this approach to allow access from the IP address running Terraform,
-  # this is required for the creation of the share below and run TF plan/apply
+  # this is required for the creation of the container below and run TF plan/apply
   # in the future.
+  # You can manually disable public access completely after deploying this module,
+  # just remember to restore this rule before executing TF again.
   public_network_access_enabled = true
   network_rules {
     default_action = "Deny"
