@@ -11,6 +11,9 @@ You can remove this rule if you run TF from a subnet with access to the Storage 
 can update this module to remove the creation of the storage accounts (and the corresponding 
 share and container) and receive them as input variables.
 
+Note that there are additional requirements and limitations for using private storage accounts 
+with Monte Carlo. Please review the docs [here](https://mc-d.io/LgZYUfJ) for further details.
+
 ## Prerequisites
 
 See the Prerequisites subsection in the module.
