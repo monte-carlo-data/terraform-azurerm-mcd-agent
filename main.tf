@@ -46,10 +46,23 @@ locals {
     MCD_STORAGE_ACCOUNT_NAME = local.agent_data_storage_account_name
     MCD_STORAGE_BUCKET_NAME  = local.agent_data_storage_container_name
   }
-  mcd_agent_function_app_settings = var.existing_storage_accounts != null && var.existing_storage_accounts.private_access ? merge({
-    "WEBSITE_CONTENTOVERVNET" = "1"
-    "WEBSITE_CONTENTSHARE"    = var.existing_storage_accounts.agent_durable_function_storage_account_share_name
-  }, local.mcd_agent_function_app_settings_base) : local.mcd_agent_function_app_settings_base
+  # SP auth env vars — only included when values are provided
+  mcd_agent_sp_auth_settings = merge(
+    var.azure_storage_auth_type != null ? { MCD_AZURE_STORAGE_AUTH_TYPE = var.azure_storage_auth_type } : {},
+    var.azure_sp_tenant_id != null ? { MCD_AZURE_SP_TENANT_ID = var.azure_sp_tenant_id } : {},
+    var.azure_sp_client_id != null ? { MCD_AZURE_SP_CLIENT_ID = var.azure_sp_client_id } : {},
+    var.azure_sp_client_secret != null ? { MCD_AZURE_SP_CLIENT_SECRET = var.azure_sp_client_secret } : {},
+    var.azure_storage_account_url != null ? { MCD_AZURE_STORAGE_ACCOUNT_URL = var.azure_storage_account_url } : {},
+  )
+
+  mcd_agent_function_app_settings = merge(
+    local.mcd_agent_function_app_settings_base,
+    var.existing_storage_accounts != null && var.existing_storage_accounts.private_access ? {
+      "WEBSITE_CONTENTOVERVNET" = "1"
+      "WEBSITE_CONTENTSHARE"    = var.existing_storage_accounts.agent_durable_function_storage_account_share_name
+    } : {},
+    local.mcd_agent_sp_auth_settings,
+  )
 }
 
 resource "random_id" "mcd_agent_id" {
