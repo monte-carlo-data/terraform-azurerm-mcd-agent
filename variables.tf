@@ -57,6 +57,54 @@ variable "existing_resource_group_name" {
   EOF
 }
 
+variable "azure_storage_auth_type" {
+  description = <<EOF
+    The authentication method for Azure Blob Storage. Set to "service_principal" to use SP auth.
+    When unset, managed identity is used (default, backwards compatible).
+  EOF
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.azure_storage_auth_type == null || var.azure_storage_auth_type == "service_principal"
+    error_message = "azure_storage_auth_type must be null or \"service_principal\"."
+  }
+}
+
+variable "azure_sp_tenant_id" {
+  description = "Entra ID tenant ID for service principal authentication. Required when azure_storage_auth_type is \"service_principal\"."
+  type        = string
+  default     = null
+}
+
+variable "azure_sp_client_id" {
+  description = "App registration client ID for service principal authentication. Required when azure_storage_auth_type is \"service_principal\"."
+  type        = string
+  default     = null
+}
+
+variable "azure_sp_client_secret" {
+  description = "App registration client secret for service principal authentication. Required when azure_storage_auth_type is \"service_principal\"."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_storage_account_url" {
+  description = <<EOF
+    Optional blob service URL for Private Link or sovereign clouds.
+    Falls back to https://{account_name}.blob.core.windows.net when unset.
+    Must use the https:// scheme.
+  EOF
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.azure_storage_account_url == null || can(regex("^https://", var.azure_storage_account_url))
+    error_message = "azure_storage_account_url must use the https:// scheme."
+  }
+}
+
 variable "existing_storage_accounts" {
   type = object({
     agent_durable_function_storage_account_name       = string # Storage account used by the Azure Durable Functions
