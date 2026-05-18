@@ -17,3 +17,29 @@ output "mcd_agent_service_identity_principal_id" {
   value       = azurerm_user_assigned_identity.mcd_agent_service_identity.principal_id
   description = "Agent service principal id."
 }
+
+output "mcd_agent_auth_type" {
+  value       = var.auth_type
+  description = "The auth type configured for this agent deployment."
+}
+
+output "mcd_agent_sp_tenant_id" {
+  value       = local.use_sp_auth ? data.azuread_client_config.current.tenant_id : null
+  description = "Entra ID tenant ID for service principal auth. Null if using app key auth."
+}
+
+output "mcd_agent_sp_client_id" {
+  value       = local.use_sp_auth ? azuread_application.mcd_agent_caller[0].client_id : null
+  description = "Caller service principal client ID. Null if using app key auth."
+}
+
+output "mcd_agent_sp_client_secret" {
+  value       = local.use_sp_auth ? azuread_application_password.mcd_agent_caller_secret[0].value : null
+  description = "Caller service principal client secret. Null if using app key auth."
+  sensitive   = true
+}
+
+output "mcd_agent_sp_audience" {
+  value       = local.use_sp_auth ? one(azuread_application.mcd_agent_function_app[0].identifier_uris) : null
+  description = "Function App audience URI for service principal auth. Null if using app key auth."
+}

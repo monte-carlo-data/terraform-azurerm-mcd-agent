@@ -5,3 +5,7 @@ provider "azurerm" {
     }
   }
 }
+
+provider "azuread" {
+  tenant_id = data.azurerm_subscription.current.tenant_id
+}
