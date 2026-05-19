@@ -59,7 +59,7 @@ variable "existing_resource_group_name" {
 
 variable "auth_type" {
   description = <<EOF
-    The authentication method for the Monte Carlo Data Collector to invoke the agent.
+    The authentication method for Monte Carlo Platform to invoke the agent.
 
     - "AZURE_FUNCTION_APP_KEY" (default): Uses the Function App's host key via x-functions-key header.
     - "AZURE_FUNCTION_SERVICE_PRINCIPAL": Uses OAuth 2.0 client credentials grant with a service

@@ -229,7 +229,7 @@ resource "azuread_service_principal" "mcd_agent_function_app" {
   client_id = azuread_application.mcd_agent_function_app[0].client_id
 }
 
-# Caller app registration — the identity the Data Collector uses to authenticate
+# Caller app registration — the identity Monte Carlo Platform uses to authenticate
 resource "azuread_application" "mcd_agent_caller" {
   count        = local.use_sp_auth ? 1 : 0
   display_name = "${local.mcd_agent_function_name}-caller"
@@ -243,7 +243,7 @@ resource "azuread_service_principal" "mcd_agent_caller" {
 resource "azuread_application_password" "mcd_agent_caller_secret" {
   count          = local.use_sp_auth ? 1 : 0
   application_id = azuread_application.mcd_agent_caller[0].id
-  display_name   = "Monte Carlo DC credential"
+  display_name   = "Monte Carlo Platform credential"
 }
 
 # Grant the caller service principal access to the Function App's API
