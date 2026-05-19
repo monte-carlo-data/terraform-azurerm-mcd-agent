@@ -57,6 +57,27 @@ variable "existing_resource_group_name" {
   EOF
 }
 
+variable "auth_type" {
+  description = <<EOF
+    The authentication method for Monte Carlo Platform to invoke the agent.
+
+    - "AZURE_FUNCTION_APP_KEY" (default): Uses the Function App's host key via x-functions-key header.
+    - "AZURE_FUNCTION_SERVICE_PRINCIPAL": Uses OAuth 2.0 client credentials grant with a service
+      principal. Creates an Entra ID app registration for the Function App, enables Easy Auth,
+      and creates a caller service principal with a client secret.
+
+    Note that "AZURE_FUNCTION_SERVICE_PRINCIPAL" requires the deploying identity to have permissions
+    to create app registrations and service principals in Entra ID. The client secret is stored in
+    Terraform state — use a secure backend.
+  EOF
+  type        = string
+  default     = "AZURE_FUNCTION_APP_KEY"
+  validation {
+    condition     = contains(["AZURE_FUNCTION_APP_KEY", "AZURE_FUNCTION_SERVICE_PRINCIPAL"], var.auth_type)
+    error_message = "auth_type must be AZURE_FUNCTION_APP_KEY or AZURE_FUNCTION_SERVICE_PRINCIPAL."
+  }
+}
+
 variable "existing_storage_accounts" {
   type = object({
     agent_durable_function_storage_account_name       = string # Storage account used by the Azure Durable Functions

@@ -45,8 +45,9 @@ locals {
     MCD_AGENT_IS_REMOTE_UPGRADABLE : var.remote_upgradable ? "true" : "false"
     MCD_STORAGE_ACCOUNT_NAME = local.agent_data_storage_account_name
     MCD_STORAGE_BUCKET_NAME  = local.agent_data_storage_container_name
+    MCD_AUTH_TYPE            = var.auth_type
   }
-  mcd_agent_function_app_settings = var.existing_storage_accounts != null && var.existing_storage_accounts.private_access ? merge({
+  mcd_agent_function_app_settings = try(var.existing_storage_accounts.private_access, false) ? merge({
     "WEBSITE_CONTENTOVERVNET" = "1"
     "WEBSITE_CONTENTSHARE"    = var.existing_storage_accounts.agent_durable_function_storage_account_share_name
   }, local.mcd_agent_function_app_settings_base) : local.mcd_agent_function_app_settings_base
@@ -189,6 +190,70 @@ resource "azurerm_role_assignment" "mcd_agent_logs_ra" {
   role_definition_name = "Log Analytics Reader"
 }
 
+## ---------------------------------------------------------------------------------------------------------------------
+## Entra ID Resources (Service Principal Auth)
+## Conditional on auth_type == "AZURE_FUNCTION_SERVICE_PRINCIPAL". Creates app registrations and
+## service principals for OAuth 2.0 client credentials grant authentication.
+## ---------------------------------------------------------------------------------------------------------------------
+
+data "azurerm_subscription" "current" {}
+data "azuread_client_config" "current" {}
+
+locals {
+  use_sp_auth = var.auth_type == "AZURE_FUNCTION_SERVICE_PRINCIPAL"
+}
+
+# Function App's app registration — defines the audience for token validation
+resource "azuread_application" "mcd_agent_function_app" {
+  count        = local.use_sp_auth ? 1 : 0
+  display_name = "${local.mcd_agent_function_name}-app"
+
+  identifier_uris = ["api://${local.mcd_agent_function_name}"]
+
+  api {
+    requested_access_token_version = 2
+  }
+
+  app_role {
+    allowed_member_types = ["Application"]
+    description          = "Allow the application to access the Function App"
+    display_name         = "FunctionApp.Call"
+    enabled              = true
+    id                   = "d5495a08-1104-4689-a64f-7edbe6506a10"
+    value                = "FunctionApp.Call"
+  }
+}
+
+resource "azuread_service_principal" "mcd_agent_function_app" {
+  count     = local.use_sp_auth ? 1 : 0
+  client_id = azuread_application.mcd_agent_function_app[0].client_id
+}
+
+# Caller app registration — the identity Monte Carlo Platform uses to authenticate
+resource "azuread_application" "mcd_agent_caller" {
+  count        = local.use_sp_auth ? 1 : 0
+  display_name = "${local.mcd_agent_function_name}-caller"
+}
+
+resource "azuread_service_principal" "mcd_agent_caller" {
+  count     = local.use_sp_auth ? 1 : 0
+  client_id = azuread_application.mcd_agent_caller[0].client_id
+}
+
+resource "azuread_application_password" "mcd_agent_caller_secret" {
+  count          = local.use_sp_auth ? 1 : 0
+  application_id = azuread_application.mcd_agent_caller[0].id
+  display_name   = "Monte Carlo Platform credential"
+}
+
+# Grant the caller service principal access to the Function App's API
+resource "azuread_app_role_assignment" "mcd_agent_caller_access" {
+  count               = local.use_sp_auth ? 1 : 0
+  app_role_id         = one(azuread_application.mcd_agent_function_app[0].app_role).id
+  principal_object_id = azuread_service_principal.mcd_agent_caller[0].object_id
+  resource_object_id  = azuread_service_principal.mcd_agent_function_app[0].object_id
+}
+
 resource "azurerm_linux_function_app" "mcd_agent_service" {
   count               = var.remote_upgradable ? 0 : 1
   name                = local.mcd_agent_function_name
@@ -221,6 +286,24 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
     identity_ids = [azurerm_user_assigned_identity.mcd_agent_service_identity.id]
   }
   app_settings = local.mcd_agent_function_app_settings
+
+  dynamic "auth_settings_v2" {
+    for_each = local.use_sp_auth ? [1] : []
+    content {
+      auth_enabled           = true
+      require_authentication = true
+      unauthenticated_action = "Return401"
+
+      active_directory_v2 {
+        client_id            = azuread_application.mcd_agent_function_app[0].client_id
+        tenant_auth_endpoint = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+        allowed_audiences    = ["api://${local.mcd_agent_function_name}", azuread_application.mcd_agent_function_app[0].client_id]
+      }
+
+      login {}
+    }
+  }
+
   lifecycle {
     ignore_changes = [
       site_config[0].application_stack[0].docker[0].registry_url,
@@ -265,6 +348,24 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
     identity_ids = [azurerm_user_assigned_identity.mcd_agent_service_identity.id]
   }
   app_settings = local.mcd_agent_function_app_settings
+
+  dynamic "auth_settings_v2" {
+    for_each = local.use_sp_auth ? [1] : []
+    content {
+      auth_enabled           = true
+      require_authentication = true
+      unauthenticated_action = "Return401"
+
+      active_directory_v2 {
+        client_id            = azuread_application.mcd_agent_function_app[0].client_id
+        tenant_auth_endpoint = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+        allowed_audiences    = ["api://${local.mcd_agent_function_name}", azuread_application.mcd_agent_function_app[0].client_id]
+      }
+
+      login {}
+    }
+  }
+
   lifecycle {
     ignore_changes = [
       site_config[0].application_stack[0],

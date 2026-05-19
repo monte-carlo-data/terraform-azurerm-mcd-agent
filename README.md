@@ -11,6 +11,8 @@ deployment options.
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) (>= 1.3)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/).
   [Authentication reference](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+- For `AZURE_FUNCTION_SERVICE_PRINCIPAL` auth: the deploying identity must have permissions to create
+  app registrations and service principals in Entra ID
 
 ## Usage
 
@@ -41,6 +43,34 @@ After which you must register your agent with Monte Carlo. See
 [here](https://docs.getmontecarlo.com/docs/create-and-register-an-azure-agent) for more details, options, and
 documentation.
 
+### Service Principal Auth
+
+To use OAuth 2.0 service principal authentication instead of the default Function App host key:
+
+```
+module "apollo" {
+  source    = "monte-carlo-data/mcd-agent/azurerm"
+  auth_type = "AZURE_FUNCTION_SERVICE_PRINCIPAL"
+}
+
+# These values are provided to Monte Carlo when registering the agent
+output "sp_credentials" {
+  value = {
+    tenant_id     = module.apollo.mcd_agent_sp_tenant_id
+    client_id     = module.apollo.mcd_agent_sp_client_id
+    client_secret = module.apollo.mcd_agent_sp_client_secret
+    audience      = module.apollo.mcd_agent_sp_audience
+  }
+  sensitive = true
+}
+```
+
+This creates Entra ID app registrations, enables Easy Auth on the Function App, and outputs the
+credentials needed to register the agent with auth type `AZURE_FUNCTION_SERVICE_PRINCIPAL`.
+
+**Note:** The client secret is stored in Terraform state. Use a secure backend to protect sensitive
+state data.
+
 Note that this module is configured to delete all resources when the resource group is deleted (e.g. via terraform
 destroy). Please take appropriate measures and review your resources before doing so.
 See [here](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/features-block#prevent_deletion_if_contains_resources)
@@ -50,6 +80,7 @@ for additional details.
 
 | **Name**                     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                      | **Type** | **Default**                       |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|-----------------------------------|
+| auth_type                    | The authentication method for Monte Carlo Platform to invoke the agent. `AZURE_FUNCTION_APP_KEY` uses the Function App's host key. `AZURE_FUNCTION_SERVICE_PRINCIPAL` uses OAuth 2.0 client credentials grant with Entra ID.                                                                                                                                                                                                         | string   | AZURE_FUNCTION_APP_KEY            |
 | disable_public_inbound       | Disable inbound public network access. Setting this to true requires enabling the use of Azure Private Endpoints (Private Link). See details here: https://docs.getmontecarlo.com/docs/azure-private-link                                                                                                                                                                                                                            | bool     | false                             |
 | image                        | The image for the agent.                                                                                                                                                                                                                                                                                                                                                                                                             | string   | montecarlodata/agent:latest-azure |
 | location                     | The Azure location (region) to deploy the agent into.                                                                                                                                                                                                                                                                                                                                                                                | string   | EAST US                           |
@@ -60,12 +91,17 @@ for additional details.
 
 ## Outputs
 
-| **Name**                                | **Description**               |
-|-----------------------------------------|-------------------------------|
-| mcd_agent_function_url                  | The URL for the agent.        |
-| mcd_agent_function_name                 | Agent function name.          |
-| mcd_agent_resource_group_name           | Agent service resource group. |
-| mcd_agent_service_identity_principal_id | Agent service principal id.   |
+| **Name**                                | **Description**                                                               |
+|-----------------------------------------|-------------------------------------------------------------------------------|
+| mcd_agent_function_url                  | The URL for the agent.                                                        |
+| mcd_agent_function_name                 | Agent function name.                                                          |
+| mcd_agent_resource_group_name           | Agent service resource group.                                                 |
+| mcd_agent_service_identity_principal_id | Agent service principal id.                                                   |
+| mcd_agent_auth_type                     | The auth type configured for this agent deployment.                           |
+| mcd_agent_sp_tenant_id                  | Entra ID tenant ID for service principal auth. Null if using app key auth.    |
+| mcd_agent_sp_client_id                  | Caller service principal client ID. Null if using app key auth.               |
+| mcd_agent_sp_client_secret              | Caller service principal client secret (sensitive). Null if using app key auth.|
+| mcd_agent_sp_audience                   | Function App audience URI for service principal auth. Null if using app key auth.|
 
 ## Releases and Development
 
