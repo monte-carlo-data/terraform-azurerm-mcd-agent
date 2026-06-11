@@ -2,16 +2,6 @@ resource "random_id" "unique_id" {
   byte_length = 4
 }
 
-# get the current IP address, used to allow access to the storage account from TF
-# to create the share
-data "http" "ip" {
-  url = "https://checkip.amazonaws.com"
-}
-
-locals {
-  my_ip = chomp(data.http.ip.response_body)
-}
-
 locals {
   suffix              = random_id.unique_id.hex
   resource_group_name = "mcd-agent-private-storage"
@@ -36,10 +26,10 @@ module "apollo" {
   existing_storage_accounts = {
     agent_durable_function_storage_account_name       = azurerm_storage_account.durable_function_storage.name
     agent_durable_function_storage_account_access_key = azurerm_storage_account.durable_function_storage.primary_access_key
-    agent_durable_function_storage_account_share_name = azurerm_storage_share.durable_function_storage.name
+    agent_durable_function_storage_account_share_name = azapi_resource.durable_function_storage_share.name
 
     agent_data_storage_account_name   = azurerm_storage_account.mcd_agent_storage.name
-    agent_data_storage_container_name = azurerm_storage_container.mcd_agent_storage_container.name
+    agent_data_storage_container_name = azapi_resource.mcd_agent_storage_container.name
 
     private_access = true
   }

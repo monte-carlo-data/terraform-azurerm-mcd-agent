@@ -10,23 +10,28 @@ resource "azurerm_storage_account" "durable_function_storage" {
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
 
-  # Using this approach to allow access from the IP address running Terraform,
-  # this is required for the creation of the share below and run TF plan/apply
-  # in the future.
-  # You can manually disable public access completely after deploying this module,
-  # just remember to restore this rule before executing TF again.
-  public_network_access_enabled = true
+  # The account is kept fully private: access is only possible through the
+  # private endpoints below. The share is created via the azapi provider
+  # (ARM management plane), so no public/data-plane access from the Terraform
+  # runner is required.
+  public_network_access_enabled = false
   network_rules {
     default_action = "Deny"
-    ip_rules       = [local.my_ip]
   }
 }
 
-# Share to use for the Azure Function, for the WEBSITE_CONTENTSHARE setting
-resource "azurerm_storage_share" "durable_function_storage" {
-  name                 = azurerm_storage_account.durable_function_storage.name
-  storage_account_name = azurerm_storage_account.durable_function_storage.name
-  quota                = 50
+# Share to use for the Azure Function, for the WEBSITE_CONTENTSHARE setting.
+# Created through the ARM management plane (azapi) rather than the storage data
+# plane, so it works even with public_network_access_enabled = false.
+resource "azapi_resource" "durable_function_storage_share" {
+  type      = "Microsoft.Storage/storageAccounts/fileServices/shares@2023-01-01"
+  name      = azurerm_storage_account.durable_function_storage.name
+  parent_id = "${azurerm_storage_account.durable_function_storage.id}/fileServices/default"
+  body = {
+    properties = {
+      shareQuota = 50
+    }
+  }
 }
 
 # Private endpoints for the Durable function storage account
@@ -114,23 +119,28 @@ resource "azurerm_storage_account" "mcd_agent_storage" {
   allow_nested_items_to_be_public   = false
   infrastructure_encryption_enabled = true
 
-  # Using this approach to allow access from the IP address running Terraform,
-  # this is required for the creation of the container below and run TF plan/apply
-  # in the future.
-  # You can manually disable public access completely after deploying this module,
-  # just remember to restore this rule before executing TF again.
-  public_network_access_enabled = true
+  # The account is kept fully private: access is only possible through the
+  # private endpoint below. The container is created via the azapi provider
+  # (ARM management plane), so no public/data-plane access from the Terraform
+  # runner is required.
+  public_network_access_enabled = false
   network_rules {
     default_action = "Deny"
-    ip_rules       = [local.my_ip]
   }
 }
 
-# Container used by the MC agent
-resource "azurerm_storage_container" "mcd_agent_storage_container" {
-  name                  = local.agent_data_storage_container_name
-  storage_account_name  = azurerm_storage_account.mcd_agent_storage.name
-  container_access_type = "private"
+# Container used by the MC agent.
+# Created through the ARM management plane (azapi) rather than the storage data
+# plane, so it works even with public_network_access_enabled = false.
+resource "azapi_resource" "mcd_agent_storage_container" {
+  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01"
+  name      = local.agent_data_storage_container_name
+  parent_id = "${azurerm_storage_account.mcd_agent_storage.id}/blobServices/default"
+  body = {
+    properties = {
+      publicAccess = "None"
+    }
+  }
 }
 
 # Private endpoint for the MC agent storage account
@@ -160,7 +170,7 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
     enabled = true
     filters {
       blob_types   = ["blockBlob", "appendBlob"]
-      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}"]
+      prefix_match = ["${azapi_resource.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}"]
     }
     actions {
       base_blob {
@@ -173,7 +183,7 @@ resource "azurerm_storage_management_policy" "mcd_agent_storage_lifecycle" {
     enabled = true
     filters {
       blob_types   = ["blockBlob", "appendBlob"]
-      prefix_match = ["${azurerm_storage_container.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}/tmp"]
+      prefix_match = ["${azapi_resource.mcd_agent_storage_container.name}/${local.agent_data_store_data_prefix}/tmp"]
     }
     actions {
       base_blob {
