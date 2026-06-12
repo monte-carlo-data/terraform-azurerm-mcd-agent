@@ -1,6 +1,6 @@
 locals {
   # Wrapper metadata
-  mcd_wrapper_version       = "1.0.3"
+  mcd_wrapper_version       = "1.0.5"
   mcd_agent_platform        = "AZURE"
   mcd_agent_deployment_type = "TERRAFORM"
 
