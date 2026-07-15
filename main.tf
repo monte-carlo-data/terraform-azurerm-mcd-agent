@@ -46,6 +46,7 @@ locals {
     MCD_STORAGE_ACCOUNT_NAME = local.agent_data_storage_account_name
     MCD_STORAGE_BUCKET_NAME  = local.agent_data_storage_container_name
     MCD_AUTH_TYPE            = var.auth_type
+    MCD_ADDITIONAL_ENV_VARS  = jsonencode(var.additional_env_vars)
   }
   mcd_agent_function_app_settings = try(var.existing_storage_accounts.private_access, false) ? merge({
     "WEBSITE_CONTENTOVERVNET" = "1"
