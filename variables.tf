@@ -96,3 +96,13 @@ variable "existing_storage_accounts" {
   EOF
 }
 
+variable "additional_env_vars" {
+  type        = map(string)
+  default     = {}
+  description = <<EOF
+    Additional environment variables to set on the agent, as a map of name to value.
+
+    Advanced/optional; used to enable optional agent features.
+  EOF
+}
+
