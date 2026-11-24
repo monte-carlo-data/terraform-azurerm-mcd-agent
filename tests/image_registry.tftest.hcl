@@ -164,6 +164,17 @@ run "rejects_managed_identity_with_docker_hub" {
   expect_failures = [azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support]
 }
 
+run "rejects_managed_identity_with_docker_hub_alias" {
+  command = plan
+
+  variables {
+    image_registry                      = "Index.Docker.io"
+    image_registry_use_managed_identity = true
+  }
+
+  expect_failures = [azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support]
+}
+
 run "rejects_empty_username" {
   command = plan
 

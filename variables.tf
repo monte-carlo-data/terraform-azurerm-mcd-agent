@@ -106,7 +106,6 @@ variable "additional_env_vars" {
   EOF
 }
 
-
 variable "image_registry" {
   description = <<EOF
     The container registry host to pull the agent image from, without a scheme (e.g. "myregistry.azurecr.io").
@@ -161,6 +160,10 @@ variable "image_registry_acr_id" {
   description = <<EOF
     Resource ID of an Azure Container Registry to grant the agent's managed identity AcrPull on.
     Requires image_registry_use_managed_identity = true.
+
+    The value must be known at plan time (e.g. from a data source or a registry created in another
+    configuration). If the registry is created in the same configuration, leave this unset and create the
+    AcrPull role assignment yourself.
   EOF
   type        = string
   default     = null
