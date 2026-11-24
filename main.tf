@@ -1,12 +1,12 @@
 locals {
   # Wrapper metadata
-  mcd_wrapper_version       = "1.0.6"
+  mcd_wrapper_version       = "1.0.7"
   mcd_agent_platform        = "AZURE"
   mcd_agent_deployment_type = "TERRAFORM"
 
   # Docker properties
   docker_scheme       = "https"
-  docker_registry_url = "docker.io"
+  docker_registry_url = var.image_registry
 
   mcd_agent_name = split(":", var.image)[0]
   mcd_agent_tag  = split(":", var.image)[1]
@@ -52,6 +52,22 @@ locals {
     "WEBSITE_CONTENTOVERVNET" = "1"
     "WEBSITE_CONTENTSHARE"    = var.existing_storage_accounts.agent_durable_function_storage_account_share_name
   }, local.mcd_agent_function_app_settings_base) : local.mcd_agent_function_app_settings_base
+}
+
+locals {
+  # Image registry inputs are cross-checked here (variable validation can't reference other variables before 1.9).
+  image_registry_has_username = var.image_registry_username != null
+  image_registry_has_password = var.image_registry_password != null
+  image_registry_inputs_valid = (
+    local.image_registry_has_username == local.image_registry_has_password &&
+    !(var.image_registry_use_managed_identity && local.image_registry_has_username) &&
+    (var.image_registry_acr_id == null || var.image_registry_use_managed_identity)
+  )
+  image_registry_inputs_error = join(" ", [
+    "Invalid image registry inputs: image_registry_username and image_registry_password must be set together;",
+    "they cannot be combined with image_registry_use_managed_identity;",
+    "and image_registry_acr_id requires image_registry_use_managed_identity = true.",
+  ])
 }
 
 resource "random_id" "mcd_agent_id" {
@@ -185,6 +201,13 @@ resource "azurerm_role_assignment" "mcd_agent_service_ra" {
   role_definition_name = var.remote_upgradable ? "Contributor" : "Reader"
 }
 
+resource "azurerm_role_assignment" "mcd_agent_acr_pull_ra" {
+  count                = var.image_registry_acr_id != null ? 1 : 0
+  scope                = var.image_registry_acr_id
+  principal_id         = azurerm_user_assigned_identity.mcd_agent_service_identity.principal_id
+  role_definition_name = "AcrPull"
+}
+
 resource "azurerm_role_assignment" "mcd_agent_logs_ra" {
   scope                = azurerm_application_insights.mcd_agent_service_insights.id
   principal_id         = azurerm_user_assigned_identity.mcd_agent_service_identity.principal_id
@@ -271,13 +294,17 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
   virtual_network_subnet_id     = var.subnet_id
 
   site_config {
-    application_insights_key               = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
-    application_insights_connection_string = azurerm_application_insights.mcd_agent_service_insights.connection_string
+    application_insights_key                      = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
+    application_insights_connection_string        = azurerm_application_insights.mcd_agent_service_insights.connection_string
+    container_registry_use_managed_identity       = var.image_registry_use_managed_identity ? true : null
+    container_registry_managed_identity_client_id = var.image_registry_use_managed_identity ? azurerm_user_assigned_identity.mcd_agent_service_identity.client_id : null
     application_stack {
       docker {
-        registry_url = local.docker_registry_url
-        image_name   = local.mcd_agent_name
-        image_tag    = local.mcd_agent_tag
+        registry_url      = local.docker_registry_url
+        image_name        = local.mcd_agent_name
+        image_tag         = local.mcd_agent_tag
+        registry_username = var.image_registry_username
+        registry_password = var.image_registry_password
       }
     }
   }
@@ -305,7 +332,13 @@ resource "azurerm_linux_function_app" "mcd_agent_service" {
     }
   }
 
+  depends_on = [azurerm_role_assignment.mcd_agent_acr_pull_ra]
+
   lifecycle {
+    precondition {
+      condition     = local.image_registry_inputs_valid
+      error_message = local.image_registry_inputs_error
+    }
     ignore_changes = [
       site_config[0].application_stack[0].docker[0].registry_url,
       app_settings["DOCKER_REGISTRY_SERVER_URL"],
@@ -333,13 +366,17 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
   virtual_network_subnet_id     = var.subnet_id
 
   site_config {
-    application_insights_key               = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
-    application_insights_connection_string = azurerm_application_insights.mcd_agent_service_insights.connection_string
+    application_insights_key                      = azurerm_application_insights.mcd_agent_service_insights.instrumentation_key
+    application_insights_connection_string        = azurerm_application_insights.mcd_agent_service_insights.connection_string
+    container_registry_use_managed_identity       = var.image_registry_use_managed_identity ? true : null
+    container_registry_managed_identity_client_id = var.image_registry_use_managed_identity ? azurerm_user_assigned_identity.mcd_agent_service_identity.client_id : null
     application_stack {
       docker {
-        registry_url = local.docker_registry_url
-        image_name   = local.mcd_agent_name
-        image_tag    = local.mcd_agent_tag
+        registry_url      = local.docker_registry_url
+        image_name        = local.mcd_agent_name
+        image_tag         = local.mcd_agent_tag
+        registry_username = var.image_registry_username
+        registry_password = var.image_registry_password
       }
     }
   }
@@ -367,7 +404,13 @@ resource "azurerm_linux_function_app" "mcd_agent_service_with_remote_upgrade_sup
     }
   }
 
+  depends_on = [azurerm_role_assignment.mcd_agent_acr_pull_ra]
+
   lifecycle {
+    precondition {
+      condition     = local.image_registry_inputs_valid
+      error_message = local.image_registry_inputs_error
+    }
     ignore_changes = [
       site_config[0].application_stack[0],
       app_settings["DOCKER_REGISTRY_SERVER_URL"],

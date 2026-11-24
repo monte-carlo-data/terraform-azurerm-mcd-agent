@@ -8,3 +8,5 @@ sanity-check:
 	terraform init -backend=false
 	terraform fmt -recursive -check -diff
 	terraform validate
+	# Offline plan tests against mocked providers (no Azure credentials needed).
+	terraform test

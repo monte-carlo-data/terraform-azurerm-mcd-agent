@@ -85,6 +85,11 @@ run "default_remote_upgradable" {
   }
 
   assert {
+    condition     = length(azurerm_role_assignment.mcd_agent_acr_pull_ra) == 0
+    error_message = "No AcrPull role assignment by default"
+  }
+
+  assert {
     condition     = sort(keys(azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support[0].app_settings)) == sort(var.expected_app_setting_keys)
     error_message = "Default app settings keys changed"
   }
