@@ -153,3 +153,25 @@ run "rejects_acr_id_without_managed_identity" {
 
   expect_failures = [azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support]
 }
+
+run "rejects_managed_identity_with_docker_hub" {
+  command = plan
+
+  variables {
+    image_registry_use_managed_identity = true
+  }
+
+  expect_failures = [azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support]
+}
+
+run "rejects_empty_username" {
+  command = plan
+
+  variables {
+    image_registry          = "registry.example.com"
+    image_registry_username = ""
+    image_registry_password = "not-a-real-secret"
+  }
+
+  expect_failures = [var.image_registry_username]
+}

@@ -127,6 +127,10 @@ variable "image_registry_username" {
   description = "Username for a private image registry. Requires image_registry_password. Leave unset to pull anonymously or with a managed identity."
   type        = string
   default     = null
+  validation {
+    condition     = var.image_registry_username == null || try(length(var.image_registry_username) > 0, false)
+    error_message = "image_registry_username must not be empty; leave it unset instead."
+  }
 }
 
 variable "image_registry_password" {
@@ -134,6 +138,10 @@ variable "image_registry_password" {
   type        = string
   default     = null
   sensitive   = true
+  validation {
+    condition     = var.image_registry_password == null || try(length(var.image_registry_password) > 0, false)
+    error_message = "image_registry_password must not be empty; leave it unset instead."
+  }
 }
 
 variable "image_registry_use_managed_identity" {

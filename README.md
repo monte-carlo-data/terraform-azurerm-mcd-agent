@@ -95,7 +95,7 @@ module "apollo" {
 ```
 
 For a registry that is not ACR, use `image_registry_username` and `image_registry_password` instead
-of the managed identity. See `examples/private_registry` for a complete example.
+of the managed identity (managed identity pull is not supported for Docker Hub). See `examples/private_registry` for a complete example.
 
 Limitations:
 
@@ -157,7 +157,8 @@ yourself with using the agent.
 
 Note that all Terraform files must conform to the standards of `terraform fmt` and
 the [standard module structure](https://developer.hashicorp.com/terraform/language/modules/develop).
-CircleCI will sanity check formatting and for valid tf config files.
+CircleCI will sanity check formatting and for valid tf config files, and run the offline tests in `tests/`
+(`terraform test` with mocked providers; needs Terraform >= 1.11 locally, unlike the module itself).
 It is also recommended you use Terraform Cloud as a backend.
 Otherwise, as normal, please follow Monte Carlo's code guidelines during development and review.
 

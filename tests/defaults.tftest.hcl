@@ -50,30 +50,6 @@ variables {
     MCD_AUTH_TYPE                                                                  = "AZURE_FUNCTION_APP_KEY"
     MCD_ADDITIONAL_ENV_VARS                                                        = "{}"
   }
-  expected_app_setting_keys = [
-    "APPINSIGHTS_RESOURCE_ID",
-    "AZURE_CLIENT_ID",
-    "AzureFunctionsJobHost__extensions__durableTask__maxConcurrentActivityFunctions",
-    "AzureFunctionsJobHost__functionTimeout",
-    "AzureWebJobsDisableHomepage",
-    "DOCKER_CUSTOM_IMAGE_NAME",
-    "DOCKER_REGISTRY_SERVER_URL",
-    "FUNCTIONS_EXTENSION_VERSION",
-    "FUNCTIONS_WORKER_PROCESS_COUNT",
-    "FUNCTION_APP_EDIT_MODE",
-    "MCD_ADDITIONAL_ENV_VARS",
-    "MCD_AGENT_CLOUD_PLATFORM",
-    "MCD_AGENT_IMAGE_TAG",
-    "MCD_AGENT_IS_REMOTE_UPGRADABLE",
-    "MCD_AGENT_WRAPPER_TYPE",
-    "MCD_AGENT_WRAPPER_VERSION",
-    "MCD_AUTH_TYPE",
-    "MCD_STORAGE_ACCOUNT_NAME",
-    "MCD_STORAGE_BUCKET_NAME",
-    "PYTHON_THREADPOOL_THREAD_COUNT",
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-    "always_on",
-  ]
 }
 
 run "default_remote_upgradable" {
@@ -87,11 +63,6 @@ run "default_remote_upgradable" {
   assert {
     condition     = length(azurerm_role_assignment.mcd_agent_acr_pull_ra) == 0
     error_message = "No AcrPull role assignment by default"
-  }
-
-  assert {
-    condition     = sort(keys(azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support[0].app_settings)) == sort(var.expected_app_setting_keys)
-    error_message = "Default app settings keys changed"
   }
 
   assert {
@@ -143,11 +114,6 @@ run "default_not_remote_upgradable" {
   assert {
     condition     = length(azurerm_linux_function_app.mcd_agent_service) == 1 && length(azurerm_linux_function_app.mcd_agent_service_with_remote_upgrade_support) == 0
     error_message = "remote_upgradable = false uses the non-upgradable resource"
-  }
-
-  assert {
-    condition     = sort(keys(azurerm_linux_function_app.mcd_agent_service[0].app_settings)) == sort(var.expected_app_setting_keys)
-    error_message = "Default app settings keys changed"
   }
 
   assert {

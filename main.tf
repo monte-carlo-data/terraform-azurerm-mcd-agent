@@ -61,12 +61,14 @@ locals {
   image_registry_inputs_valid = (
     local.image_registry_has_username == local.image_registry_has_password &&
     !(var.image_registry_use_managed_identity && local.image_registry_has_username) &&
-    (var.image_registry_acr_id == null || var.image_registry_use_managed_identity)
+    (var.image_registry_acr_id == null || var.image_registry_use_managed_identity) &&
+    !(var.image_registry_use_managed_identity && var.image_registry == "docker.io")
   )
   image_registry_inputs_error = join(" ", [
     "Invalid image registry inputs: image_registry_username and image_registry_password must be set together;",
     "they cannot be combined with image_registry_use_managed_identity;",
-    "and image_registry_acr_id requires image_registry_use_managed_identity = true.",
+    "image_registry_acr_id requires image_registry_use_managed_identity = true;",
+    "and image_registry_use_managed_identity requires a private image_registry (not docker.io).",
   ])
 }
 
