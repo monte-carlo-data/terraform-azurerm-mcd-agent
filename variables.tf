@@ -106,3 +106,65 @@ variable "additional_env_vars" {
   EOF
 }
 
+variable "image_registry" {
+  description = <<EOF
+    The container registry host to pull the agent image from, without a scheme (e.g. "myregistry.azurecr.io").
+    Defaults to Docker Hub. The repository and tag are still set with `image`.
+
+    Note that the registry is only read when the Function App is created; changing it later has no effect.
+  EOF
+  type        = string
+  default     = "docker.io"
+  nullable    = false
+  validation {
+    condition     = length(var.image_registry) > 0 && !can(regex("^[a-zA-Z]+://", var.image_registry)) && !endswith(var.image_registry, "/")
+    error_message = "image_registry must be a registry host without a scheme or trailing slash, e.g. myregistry.azurecr.io."
+  }
+}
+
+variable "image_registry_username" {
+  description = "Username for a private image registry. Requires image_registry_password. Leave unset to pull anonymously or with a managed identity."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.image_registry_username == null || try(length(var.image_registry_username) > 0, false)
+    error_message = "image_registry_username must not be empty; leave it unset instead."
+  }
+}
+
+variable "image_registry_password" {
+  description = "Password (or token) for a private image registry. Requires image_registry_username. Stored in Terraform state."
+  type        = string
+  default     = null
+  sensitive   = true
+  validation {
+    condition     = var.image_registry_password == null || try(length(var.image_registry_password) > 0, false)
+    error_message = "image_registry_password must not be empty; leave it unset instead."
+  }
+}
+
+variable "image_registry_use_managed_identity" {
+  description = <<EOF
+    Pull the agent image using the agent's user-assigned managed identity (e.g. from Azure Container Registry).
+    The identity needs the AcrPull role on the registry: set image_registry_acr_id to have this module grant it,
+    or grant it yourself (see the mcd_agent_service_identity_principal_id output).
+
+    Cannot be combined with image_registry_username/image_registry_password.
+  EOF
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "image_registry_acr_id" {
+  description = <<EOF
+    Resource ID of an Azure Container Registry to grant the agent's managed identity AcrPull on.
+    Requires image_registry_use_managed_identity = true.
+
+    The value must be known at plan time (e.g. from a data source or a registry created in another
+    configuration). If the registry is created in the same configuration, leave this unset and create the
+    AcrPull role assignment yourself.
+  EOF
+  type        = string
+  default     = null
+}
